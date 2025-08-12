@@ -5,8 +5,9 @@ const jwt = require('jsonwebtoken');
 // CREATE USER
 async function signUp(req, res) {
     try {
-        const { username, email, password } = req.body;
+        const { firstname, lastname, username, email, password, role, roleId } = req.body;
 
+        // Check if email already exists
         if (await User.findOne({ email })) {
             return res.status(400).json({ message: 'User already exists' });
         }
@@ -14,22 +15,40 @@ async function signUp(req, res) {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await User.create({
+            firstname,
+            lastname,
             username,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            role: role && role.trim() !== "" ? role : "user", // Default if not provided
+            roleId: roleId && roleId.trim() !== "" ? roleId : "1002" // Default if not provided
         });
 
         const token = jwt.sign(
-            { id: newUser._id, email: newUser.email },
+            { id: newUser._id, email: newUser.email, role: newUser.role },
             process.env.JWT_SECRET || 'mysecretkey',
-            { expiresIn: '10s' }
+            { expiresIn: '1h' }
         );
 
-        res.status(201).json({ message: 'User registered successfully', token });
+        res.status(201).json({
+            message: 'User registered successfully',
+            token,
+            user: {
+                id: newUser._id,
+                firstname: newUser.firstname,
+                lastname: newUser.lastname,
+                username: newUser.username,
+                email: newUser.email,
+                role: newUser.role,
+                roleId: newUser.roleId
+            }
+        });
+
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 }
+
 
 // LOGIN USER
 async function login(req, res) {
@@ -49,7 +68,7 @@ async function login(req, res) {
         const token = jwt.sign(
             { id: user._id, email: user.email },
             process.env.JWT_SECRET || 'mysecretkey',
-            { expiresIn: '10s' }
+            { expiresIn: '1h' }
         );
 
         res.json({ message: 'Login successful', token });
