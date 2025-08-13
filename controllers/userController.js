@@ -122,30 +122,34 @@ async function login(req, res) {
 
 
 // GET USER DETAILS
-async function getUser(req, res) {
+async function getAllUsers(req, res) {
   try {
-    // Find user by ID and exclude password
-    const user = await User.findById(req.userId).select('-password');
+    res.set({
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+      "Surrogate-Control": "no-store",
+    });
 
-    // 404 Not Found if user does not exist
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    const users = await User.find().select("-password");
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: "No users found" });
     }
 
-    // 200 OK if user is found
     return res.status(200).json({
-      message: 'User fetched successfully',
-      user,
+      message: "Users fetched successfully",
+      users,
     });
   } catch (err) {
-    // 500 Internal Server Error for unexpected errors
     console.error(err);
     return res.status(500).json({
-      message: 'Internal server error',
+      message: "Internal server error",
       error: err.message,
     });
   }
 }
 
 
-module.exports = { signUp, login, getUser };
+
+module.exports = { signUp, login, getAllUsers };
