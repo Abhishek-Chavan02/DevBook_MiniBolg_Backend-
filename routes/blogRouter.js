@@ -6,13 +6,13 @@ const {
   getBlogById,
   updateBlog,
   deleteBlog,
-  likeBlog
+  toggleLike
 } = require("../controllers/blogController");
 
 const router = express.Router();
 
 // Create a blog (protected)
-router.post("/create", verifyToken, createBlog);
+router.post("/createBlog", verifyToken, createBlog);
 
 // Get all blogs (public or protected)
 router.get("/all", getAllBlogs);
@@ -21,12 +21,12 @@ router.get("/all", getAllBlogs);
 router.get("/:id", getBlogById);
 
 // Update blog by ID
-router.put("/update/:id", verifyToken, updateBlog);
+router.put("/updateBlog/:id", verifyToken, updateBlog);
 
 // Delete blog by ID
-router.delete("/delete/:id", verifyToken, deleteBlog);
+router.delete("/deleteBlog/:id", verifyToken, deleteBlog);
 
-// Like a blog
-router.put("/like/:id", verifyToken, likeBlog);
+// Like/Unlike a blog
+router.put('/like/:blogId/:userId', verifyToken, toggleLike);
 
 module.exports = router;

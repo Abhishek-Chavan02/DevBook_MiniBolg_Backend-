@@ -179,8 +179,8 @@ async function getUserById(req, res) {
   try {
     const { id } = req.params;
 
-    // Find user by ID, excluding password
-    const user = await User.findById(id).select("-password");
+    // Use findOne instead of findById for string _id
+    const user = await User.findOne({ _id: id }).select("-password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

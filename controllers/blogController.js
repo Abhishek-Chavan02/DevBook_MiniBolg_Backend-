@@ -1,17 +1,17 @@
+const { default: mongoose } = require("mongoose");
 const Blog = require("../models/blogSchema");
 
 // CREATE BLOG
 async function createBlog(req, res) {
   try {
-    const { title, tag, description, createdBy } = req.body;
+    const { tag, description, createdBy } = req.body;
 
-    if (!title || !description || !createdBy) {
-      return res.status(400).json({ message: "Title, description, and createdBy are required" });
+    if (!tag || !description || !createdBy) {
+      return res.status(400).json({ message: "Tag, description, and createdBy are required" });
     }
 
     const newBlog = await Blog.create({
-      title,
-      tag: tag || "",
+      tag,
       description,
       createdBy,
     });
@@ -69,7 +69,7 @@ async function getBlogById(req, res) {
 async function updateBlog(req, res) {
   try {
     const { id } = req.params;
-    const { title, tag, description } = req.body;
+    const { tag, description } = req.body;
 
     const blog = await Blog.findById(id);
     if (!blog || blog.isDeleted) {
@@ -79,7 +79,6 @@ async function updateBlog(req, res) {
     const updatedBlog = await Blog.findByIdAndUpdate(
       id,
       {
-        title: title ?? blog.title,
         tag: tag ?? blog.tag,
         description: description ?? blog.description,
       },
@@ -116,4 +115,56 @@ async function deleteBlog(req, res) {
   }
 }
 
-module.exports = { createBlog, getAllBlogs, getBlogById, updateBlog, deleteBlog };
+async function toggleLike(req, res) {
+  try {
+    const { blogId, userId } = req.params;
+
+    // Validate ObjectId format - FIXED THE SYNTAX ERROR HERE
+    if (!mongoose.Types.ObjectId.isValid(blogId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid ID format" });
+    }
+
+    const blog = await Blog.findById(blogId);
+    if (!blog || blog.isDeleted) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    // Check if user already liked the post
+    const userIndex = blog.likes.findIndex(id => id.equals(userId));
+
+    if (userIndex !== -1) {
+      // User already liked - unlike the post
+      blog.likes.pull(userId);
+      blog.likeCount -= 1;
+      await blog.save();
+      
+      return res.status(200).json({
+        message: "Post unliked",
+        likeCount: blog.likeCount,
+        isLiked: false
+      });
+    }
+
+    // User hasn't liked - add like
+    blog.likes.push(userId);
+    blog.likeCount += 1;
+    await blog.save();
+
+    return res.status(200).json({
+      message: "Post liked",
+      likeCount: blog.likeCount,
+      isLiked: true
+    });
+  } catch (err) {
+    console.error("Error in toggleLike:", err);
+    return res.status(500).json({ 
+      message: "Internal server error",
+      error: err.message 
+    });
+  }
+}
+
+
+
+
+module.exports = { createBlog, getAllBlogs, getBlogById, updateBlog, deleteBlog, toggleLike };
