@@ -150,6 +150,97 @@ async function getAllUsers(req, res) {
   }
 }
 
+// DELETE USER BY ID
+async function deleteUser(req, res) {
+  try {
+    const { id } = req.params;
+
+    // Check if user exists
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(id);
+
+    return res.status(200).json({ message: "User deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+}
+
+// GET USER BY ID
+async function getUserById(req, res) {
+  try {
+    const { id } = req.params;
+
+    // Find user by ID, excluding password
+    const user = await User.findById(id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      message: "User fetched successfully",
+      user,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+}
+
+// UPDATE USER BY ID
+async function updateUser(req, res) {
+  try {
+    const { id } = req.params;
+    const { firstname, lastname, username, email, password, role, roleId } = req.body;
+
+    // Check if user exists
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Prepare update fields
+    const updateData = {
+      firstname: firstname ?? user.firstname,
+      lastname: lastname ?? user.lastname,
+      username: username ?? user.username,
+      email: email ?? user.email,
+      role: role ?? user.role,
+      roleId: roleId ?? user.roleId,
+    };
+
+    // If password is provided, hash it
+    if (password && password.trim() !== "") {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true }).select("-password");
+
+    return res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+}
 
 
-module.exports = { signUp, login, getAllUsers };
+module.exports = { signUp, login, getAllUsers, deleteUser, updateUser, getUserById };
