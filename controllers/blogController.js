@@ -2,19 +2,53 @@ const { default: mongoose } = require("mongoose");
 const Blog = require("../models/blogSchema");
 
 // CREATE BLOG
+// async function createBlog(req, res) {
+//   try {
+//     const { tag, description, createdBy } = req.body;
+
+//     if (!tag || !description || !createdBy) {
+//       return res.status(400).json({ message: "Tag, description, and createdBy are required" });
+//     }
+
+//     const newBlog = await Blog.create({
+//       tag,
+//       description,
+//       createdBy,
+//     });
+
+//     return res.status(201).json({
+//       message: "Blog created successfully",
+//       blog: newBlog,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ message: "Internal server error", error: err.message });
+//   }
+// }
 async function createBlog(req, res) {
   try {
-    const { tag, description, createdBy } = req.body;
+    const { tag, description, message, createdBy } = req.body;
 
-    if (!tag || !description || !createdBy) {
-      return res.status(400).json({ message: "Tag, description, and createdBy are required" });
+    if (!createdBy) {
+      return res.status(400).json({ message: "createdBy is required" });
     }
 
-    const newBlog = await Blog.create({
-      tag,
-      description,
-      createdBy,
-    });
+    let newBlogData = { createdBy };
+
+    if (message) {
+      // Creating a message entry
+      newBlogData.message = message;
+    } else if (tag && description) {
+      // Creating a blog post
+      newBlogData.tag = tag;
+      newBlogData.description = description;
+    } else {
+      return res.status(400).json({
+        message: "Either (tag and description) or message must be provided",
+      });
+    }
+
+    const newBlog = await Blog.create(newBlogData);
 
     return res.status(201).json({
       message: "Blog created successfully",
@@ -22,9 +56,13 @@ async function createBlog(req, res) {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error", error: err.message });
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
   }
 }
+
 
 // GET ALL BLOGS (excluding soft deleted)
 async function getAllBlogs(req, res) {

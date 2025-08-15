@@ -47,7 +47,6 @@ const blogSchema = new Schema({
   },
   description: {
     type: String,
-    required: true,
     trim: true,
     maxlength: 1000,
   },
@@ -61,9 +60,10 @@ const blogSchema = new Schema({
       ref: "User",
     }
   ],
-  messageCount: {
-    type: Number,
-    default: 0,
+  message: {
+    type: String,
+    trim: true,
+    maxlength: 1000,
   },
   isDeleted: {
     type: Boolean,
