@@ -1,30 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const Blog = require("../models/blogSchema");
 
-// CREATE BLOG
-// async function createBlog(req, res) {
-//   try {
-//     const { tag, description, createdBy } = req.body;
-
-//     if (!tag || !description || !createdBy) {
-//       return res.status(400).json({ message: "Tag, description, and createdBy are required" });
-//     }
-
-//     const newBlog = await Blog.create({
-//       tag,
-//       description,
-//       createdBy,
-//     });
-
-//     return res.status(201).json({
-//       message: "Blog created successfully",
-//       blog: newBlog,
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ message: "Internal server error", error: err.message });
-//   }
-// }
 async function createBlog(req, res) {
   try {
     const { tag, description, message, createdBy } = req.body;
@@ -63,8 +39,6 @@ async function createBlog(req, res) {
   }
 }
 
-
-// GET ALL BLOGS (excluding soft deleted)
 async function getAllBlogs(req, res) {
   try {
     const blogs = await Blog.find({ isDeleted: false }).populate("createdBy", "-password");
@@ -83,7 +57,6 @@ async function getAllBlogs(req, res) {
   }
 }
 
-// GET BLOG BY ID
 async function getBlogById(req, res) {
   try {
     const { id } = req.params;
@@ -103,7 +76,6 @@ async function getBlogById(req, res) {
   }
 }
 
-// UPDATE BLOG
 async function updateBlog(req, res) {
   try {
     const { id } = req.params;
