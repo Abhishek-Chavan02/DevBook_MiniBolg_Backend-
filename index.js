@@ -20,8 +20,8 @@ app.use(cors({
 
 connectDB();
 
-app.use("/", userRoutes);
-app.use("/", blogRouter); 
+app.use("/api", userRoutes);
+app.use("/api", blogRouter); 
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
