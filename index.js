@@ -14,7 +14,6 @@ app.use(express.json());
 // Add CORS middleware here
 app.use(cors({
   origin: 'https://devbook-mini-blog-front-l52g.vercel.app',
-  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
