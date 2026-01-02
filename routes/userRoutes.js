@@ -5,7 +5,8 @@ const {
   getAllUsers, 
   deleteUser, 
   updateUser, 
-  getUserById
+  getUserById,
+  setOtp
 } = require("../controllers/userController");
 const verifyToken = require("../middleware/auth");
 
@@ -20,5 +21,6 @@ router.get("/getAllUsers", verifyToken, getAllUsers);
 router.delete("/deleteUser/:id", verifyToken, deleteUser);
 router.put("/updateUser/:id", verifyToken, updateUser);
 router.put("/getUserById/:id", verifyToken, getUserById);
+router.post("/setOtp", setOtp);
 
 module.exports = router;

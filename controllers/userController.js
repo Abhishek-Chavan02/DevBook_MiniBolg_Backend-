@@ -1,14 +1,15 @@
 const User = require('../models/userSchema');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const twilio = require("twilio");
+const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 // CREATE USER
 async function signUp(req, res) {
     try {
-        const { firstname, lastname, username, email, password, role, roleId } = req.body;
+        const { firstname, lastname, username, email, password, mobile_no, role, roleId } = req.body;
 
         // 400 Bad Request if required fields are missing
-        if (!firstname || !lastname || !username || !email || !password) {
+        if (!firstname || !lastname || !username || !email || !password || !mobile_no) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
@@ -27,6 +28,7 @@ async function signUp(req, res) {
             lastname,
             username,
             email,
+            mobile_no,
             password: hashedPassword,
             role: role && role.trim() !== "" ? role : "user",
             roleId: roleId && roleId.trim() !== "" ? roleId : "1002"
@@ -49,6 +51,7 @@ async function signUp(req, res) {
                 lastname: newUser.lastname,
                 username: newUser.username,
                 email: newUser.email,
+                mobile_no: newUser.mobile_no,
                 role: newUser.role,
                 roleId: newUser.roleId,
                 createdAt: newUser.createdAt,
@@ -243,4 +246,31 @@ async function updateUser(req, res) {
 }
 
 
-module.exports = { signUp, login, getAllUsers, deleteUser, updateUser, getUserById };
+
+async function setOtp(req, res) {
+  try {
+    const { mobile_no } = req.body;
+
+    if (!mobile_no) {
+      return res.status(400).json({ message: "Mobile number is required" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    await client.messages.create({
+      body: `Your OTP is: ${otp}`,
+      from: process.env.TWILIO_PHONE_NUMBER, 
+      to: `+91${mobile_no}`
+    });
+
+    return res.status(200).json({ message: "OTP sent successfully", otp });
+
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to send OTP", error: err.message });
+  }
+}
+
+
+
+
+module.exports = { signUp, login, getAllUsers, deleteUser, updateUser, getUserById, setOtp };

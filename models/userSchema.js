@@ -30,6 +30,11 @@ const userSchema = new Schema({
     trim: true,
     match: /.+\@.+\..+/,
   },
+  mobile_no: {
+    type: String,
+    trim: true,
+    match: /^[0-9]{10}$/,
+  },
   password: {
     type: String,
     required: true,
