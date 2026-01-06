@@ -247,23 +247,31 @@ async function updateUser(req, res) {
 
 
 
-async function setOtp(req, res) {
+async function sendOtp(req, res) {
   try {
     const { mobile_no } = req.body;
-
     if (!mobile_no) {
       return res.status(400).json({ message: "Mobile number is required" });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
 
+    // Create JWT containing OTP
+    const otpToken = jwt.sign(
+      { mobile_no, otp },
+      process.env.JWT_SECRET || 'mysecretkey',
+      { expiresIn: "1m" } // 1 min expiry
+    );
+
+    // Send SMS
     await client.messages.create({
-      body: `Your OTP is: ${otp}`,
-      from: process.env.TWILIO_PHONE_NUMBER, 
-      to: `+91${mobile_no}`
+      body: `Your login OTP is: ${otp}`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: `+91${mobile_no.trim()}`
     });
 
-    return res.status(200).json({ message: "OTP sent successfully", otp });
+    // Return token (not OTP)
+    return res.status(200).json({ message: "OTP sent", otpToken });
 
   } catch (err) {
     return res.status(500).json({ message: "Failed to send OTP", error: err.message });
@@ -271,6 +279,60 @@ async function setOtp(req, res) {
 }
 
 
+async function validateOtp(req, res) {
+  try {
+    const { otpToken, userOtp } = req.body;
+
+    if (!otpToken || !userOtp) {
+      return res.status(400).json({ message: "OTP token and OTP are required" });
+    }
+
+    // Verify token using secret key
+    const decoded = jwt.verify(
+      otpToken,
+      process.env.JWT_SECRET || "mysecretkey"
+    );
+
+    // Compare OTP
+    if (decoded.otp !== Number(userOtp)) {
+      return res.status(401).json({ message: "Invalid OTP" });
+    }
+      const user = await User.findOne({ mobile_no: decoded.mobile_no });
+    if (!user) {
+      return res.status(404).json({ message: "User with this mobile number not found" });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || "mysecretkey",
+      { expiresIn: "1h" }
+    );
+
+   return res.status(200).json({
+      message: "OTP verified successfully",
+      token,
+      user: {
+        id: user._id,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        username: user.username,
+        email: user.email,
+        mobile_no: user.mobile_no,
+        role: user.role,
+        roleId: user.roleId,
+        createdAt: user.createdAt,
+      },
+    });
+    
+
+  } catch (err) {
+    return res.status(401).json({
+      message: "OTP expired or invalid token",
+      error: err.message
+    });
+  }
+}
 
 
-module.exports = { signUp, login, getAllUsers, deleteUser, updateUser, getUserById, setOtp };
+
+module.exports = { signUp, login, getAllUsers, deleteUser, updateUser, getUserById, sendOtp, validateOtp };
