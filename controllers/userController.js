@@ -260,7 +260,7 @@ async function sendOtp(req, res) {
     const otpToken = jwt.sign(
       { mobile_no, otp },
       process.env.JWT_SECRET || 'mysecretkey',
-      { expiresIn: "1m" } // 1 min expiry
+      { expiresIn: "2m" } // 5 min expiry
     );
 
     // Send SMS
